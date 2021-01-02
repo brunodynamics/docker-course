@@ -180,3 +180,58 @@ Para hacer la operación inversa:
 > docker cp \<container_name\>:\<dest_path\> \<file_path\>
 
 <small>Psdt: No hace falta que el contenedor esté corriendo para realizar estas operaciones.</small>
+
+## Imágenes
+
+Una imagen es un compilado de todo lo que un contenedor necesita para funcionar correctamente.
+Son plantillas las cuales se utilizarán para crear nuevos contenedores.
+
+Para listar las imágenes que tenemos en local utilizamos el siguiente comando:
+
+> docker image ls
+
+Para instalar una imagen sin correr un contenedor podemos usar el comando:
+
+> docker pull \<image_name\>
+
+<small>Nota: El repositorio de todas las imágenes de Docker se encuentra en <a href="https://hub.docker.com">Docker Hub</a></small>
+
+Para eliminar una imagen de Docker utilizamos lo siguiente:
+
+> docker rmi \<image_ID\>
+
+<small>En caso Docker nos indique que no se puede eliminar la imagen porque hay repositorios que dependen de ella, podemos agregar el flag <i>-f</i> al comando</small>
+
+## Construir una imagen propia
+
+Lo primero que debemos hacer para esto es crear un archivo llamado _Dockerfile_. Este contendrá una serie de comandos que le indicarán a Docker como proceder para crear la imagen requerida.
+
+Para correr este _Dockerfile_ usamos el siguiente comando:
+
+> docker build -t \<iamge_name\>:\<tag\> \<Dockerfile path\>
+
+Con esto nuestra imagen ya fue creada y guardada en local. Ahora podríamos crear contenedores que tengan esta imagen como base.
+
+Ahora, si quisiéramos publicar esta imagen en Docker Hub es tan sencillo como hacer lo siguiente:
+
+Primero nos autenticamos en Docker:
+
+> docker login
+
+Luego debemos asegurarnos de cambiar el tag de la imagen, pues esta muy probablemente esté basada en una imagen privada de alguna organización.
+
+> docker tag \<image_name\>:\<tag\> \<dockerhub_username\>/\<image_name\>:\<tag\>
+
+Finalmente, ejecutamos el comando _push_ de Docker para enviarlo al repositorio remoto.
+
+> docker push \<dockerhub_username\>/\<image_name\>:\<tag\>
+
+## Sistema de capas
+
+Las imágenes de Docker son conjuntos de capas. Cada capa muestra una operación realizada para que la imagen pueda tener la forma y funcionalidad requerida.
+
+En [Docker Hub](https://hub.docker.com) podremos encontrar los _Dockerfile_ de cada imagen alojada, esto puede ser consultado por nosotros para entender las buenas prácticas al crear estos archivos y entender un poco de las dependencias y acciones de cada imagen.
+
+En caso no tengamos como ver ese Dockerfile, también podemos ver la historia de la imagen con un simple comando:
+
+> docker history \<image_name\>:\<tag\>
