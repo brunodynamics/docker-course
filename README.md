@@ -20,6 +20,10 @@ Al correr un contenedor, Docker le asignará un nombre por defecto. Si deseamos 
 
 > docker run --name \<container_own_name\> \<container_name\>
 
+Si deseáramos correr un contenedor con alguna variable de entorno seteada:
+
+> docker run --name --env \<env_variable_name\>=\<value\> \<container_own_name\> \<container_name\>
+
 ## Renombrar un contenedor
 
 Docker no te permite tener dos contenedores con un mismo nombre.
@@ -208,7 +212,7 @@ Lo primero que debemos hacer para esto es crear un archivo llamado _Dockerfile_.
 
 Para correr este _Dockerfile_ usamos el siguiente comando:
 
-> docker build -t \<iamge_name\>:\<tag\> \<Dockerfile path\>
+> docker build -t \<iamge_name\>:\<tag\> \<dockerfile_location\>
 
 Con esto nuestra imagen ya fue creada y guardada en local. Ahora podríamos crear contenedores que tengan esta imagen como base.
 
@@ -235,3 +239,71 @@ En [Docker Hub](https://hub.docker.com) podremos encontrar los _Dockerfile_ de c
 En caso no tengamos como ver ese Dockerfile, también podemos ver la historia de la imagen con un simple comando:
 
 > docker history \<image_name\>:\<tag\>
+
+## Usando Docker para desarrollar aplicaciones
+
+Para poder preparar el entorno de desarrollo de nuestras aplicaciones con Docker es necesario tener un _Dockerfile_ con los comandos que esta necesite para su ejecución.
+
+Para este ejemplo se usará el [repositorio de Docker de Platzi](https://github.com/platzi/docker).
+
+Este tiene una pequeña aplicación que corre un servidor en Express.js y se conecta a una base de datos de Mongo DB.
+
+Una vez que se tenga este clonado en nuestras máquinas es necesario construir la imagen utilizando su _Dockerfile_.
+
+> docker build -t \<own_image_name\> \<dockerfile_location\>
+
+Con la imagen construída ya se puede crear un contenedor en base a esta:
+
+> docker run --rm -p 3000:3000 platziapp
+
+<small>Nota: Con el tag <i>--rm</i> le indicamos a Docker que una vez que el contenedor se detenga, puede ser borrado.</small>
+
+## Aprovechando el Layer Caching
+
+Docker aplica caching para agilizar la contrucción de sus imágenes, por ello es idóneo escribir los comandos del _Dockerfile_ de manera en que esto se puede aprovechar mejor.
+
+Una buena práctica para esto hacer el traslado de archivos en tres pasos:
+
+1. Copiar los archivos que contengan las dependencias requeridas por el programa. Ejemplo: package.json, requierements.txt, go.mod, etc.
+
+2. Correr el comando de instalación de dependencias.
+
+3. Copiar todos los archivos (Docker es inteligente y no copiará los que ya copiamos en el paso 1).
+
+Ahora bien, cuando estemos desarrollando se podría hacer muy incómodo tener que reconstruir la imagen cada vez que hagamos cambios en nuestro código, por lo cual necesitamos que este proceso sea automático.
+
+Siguiendo con el ejemplo del repositorio de Platzi, utilizaremos un daemon de desarrollo con Node.js llamado _Nodemon_, el cual identificará los cambios en el _index.js_ del proyecto y los enviará al repositorio vía bind mount:
+
+Como primer paso, al final del _Dockerfile_ se agregará un comando que correrá _Nodemon_:
+
+> CMD ["npx", "nodemon", "index.js"]
+
+Luego se hará build de la imagen:
+
+> docker build -t platziapp \<dockerfile_path\>
+
+> docker run --rm -p 3000:3000 -v \<local_file_path\>:\<container_destiny_path\> \<image_name\>
+
+## Docker Networking
+
+En el caso de ejemplo que se está trabajando y en muchos otros vamos a encontrar la necesidad de tener más de un contenedor corriendo y no solo eso, sino también que estos estén conectados entre sí.
+Para esto se utilizará el _Docker Networking_.
+
+Para listar los networks que están corriendo en nuestra máquina:
+
+> docker network ls
+
+Si queremos crear una red nueva podemos usar el siguiente comando:
+
+> docker network create --attachable \<network_name\>
+
+<small>Nota: Con el flag <i>--attachable</i> permitiremos a otrso contenedores contectarse a la red.</small>
+
+Para ver los detalles de la red usamos el comando:
+
+> docker network inspect \<network_name\>
+
+Con una red creada tocaría ahora crear los contenedores que se conectarán a ella.
+Para hacer la conexión podemos usar el siguiente comando:
+
+> docker network connect \<network_name\> \<container_name\>
